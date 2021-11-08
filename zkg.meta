@@ -1,0 +1,19 @@
+[package]
+summary = TODO: A summary of Messages in one line
+description = TODO: A more detailed description of Messages.
+	It can span multiple lines, with this indention.
+script_dir = analyzer
+plugin_dir = build/spicy-modules
+build_command = unset -v CXX CXXFLAGS LD LDFLAGS && mkdir -p build && cd build && cmake .. && cmake --build .
+test_command = unset -v CXX CXXFLAGS LD LDFLAGS && cd tests && PATH=$(zkg config plugin_dir)/packages/spicy-plugin/bin:$PATH btest -d -j $(nproc)
+
+depends = spicy-plugin >=1.2.2
+
+[template]
+source = package-template-spicy
+version = master
+zkg_version = 2.12.0
+
+[template_vars]
+namespace = LDAP
+name = Messages

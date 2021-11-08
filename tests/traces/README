@@ -1,0 +1,6 @@
+The test suite comes with a set of traces collected from a variety of
+places that we document below. While these traces are all coming from
+public sources, please note that they may carry their own licenses.
+We collect them here for convenience only.
+
+- [ldap-simpleauth.pcap](https://github.com/arkime/arkime/blob/main/tests/pcap/ldap-simpleauth.pcap)
