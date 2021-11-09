@@ -1,0 +1,28 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  Check:
+    runs-on: ubuntu-latest
+    container: zeekurity/spicy
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Prepare
+        env:
+          PATH: /usr/local/bin:/opt/cmake/bin:/opt/spicy/bin:/opt/zeek/bin:/opt/zeek/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        run: |
+          echo $PATH
+          pip install zkg
+          zkg purge --force
+      - name: Install
+        env:
+          PATH: /usr/local/bin:/opt/cmake/bin:/opt/spicy/bin:/opt/zeek/bin:/opt/zeek/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        run: |
+          git clean -fd
+          eval $(zkg env)
+          zkg -vvvvv install --force . || cat .zkg/logs/*.log
