@@ -1,7 +1,6 @@
 [package]
-summary = TODO: A summary of Messages in one line
-description = TODO: A more detailed description of Messages.
-	It can span multiple lines, with this indention.
+summary = LDAP analyzer
+description = An LDAP analyzer based on Spicy
 script_dir = analyzer
 plugin_dir = build/spicy-modules
 build_command = unset -v CXX CXXFLAGS LD LDFLAGS && mkdir -p build && cd build && SPICYZ=%(package_base)s/spicy-plugin/build/bin/spicyz cmake .. && cmake --build .
