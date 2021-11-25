@@ -16,13 +16,22 @@ jobs:
         env:
           PATH: /usr/local/bin:/opt/cmake/bin:/opt/spicy/bin:/opt/zeek/bin:/opt/zeek/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         run: |
-          echo $PATH
-          pip install zkg
-          zkg purge --force
+          # Clean out leftover logs for to make it easier to print "our" logs.
+          rm -f $(zkg config state_dir)/logs/*.log
+          zkg -vvvvv purge --force
+
+          # Manually install spicy-plugin until the image contains a zkg version with a fix for https://github.com/zeek/package-manager/issues/106 (>=zkg-2.12.0).
+          zkg -vvvvv install --force --skiptests spicy-plugin
+
       - name: Install
         env:
           PATH: /usr/local/bin:/opt/cmake/bin:/opt/spicy/bin:/opt/zeek/bin:/opt/zeek/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         run: |
           git clean -fd
           eval $(zkg env)
-          zkg -vvvvv install --force . || cat .zkg/logs/*.log
+          zkg -vvvvv install --force .
+
+      - name: Show logs
+        if: always()
+        run: |
+          tail -n 1000000 $(zkg config state_dir)/logs/*.log
