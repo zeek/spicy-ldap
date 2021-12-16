@@ -50,7 +50,6 @@ Here's what it has:
 
 Here's what it doesn't have, which could be added by future parties interested in expanding it:
 
-- although LDAP can use UDP as transport, currently the analyzer only looks for `389/tcp, 3268/tcp`; this may be easy to change, but I don't have any examples of traffic to test it with so I haven't bothered
 - LDAP [referrals](https://tools.ietf.org/html/rfc4511#section-4.1.10) are not parsed out of the results
 - [SASL credentials](https://datatracker.ietf.org/doc/html/rfc4511#section-4.2) in bind requests are not being parsed beyond the mechanism string
 - SASL information in bind responses are not being parsed; for that matter, SASL-based LDAP stuff hasn't been tested much and may have issues
@@ -64,3 +63,11 @@ Here's what it doesn't have, which could be added by future parties interested i
 - the details of `ExtendedRequest` are not being parsed
 - the details of `ExtendedResponse` are not being parsed
 - the details of `IntermediateResponse` are not being parsed
+
+Useful Links:
+
+- <https://luca.ntop.org/Teaching/Appunti/asn1.html>
+- <https://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf>
+- <https://tools.ietf.org/html/rfc4511#>
+- <https://ldap.com/ldapv3-wire-protocol-reference-asn1-ber/>
+- <https://lapo.it/asn1js>
