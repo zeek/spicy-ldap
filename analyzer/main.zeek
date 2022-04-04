@@ -284,7 +284,11 @@ function set_session(c: connection, message_id: int, opcode: LDAP::ProtocolOpcod
 }
 
 #############################################################################
-event analyzer_confirmation(c: connection, atype: Analyzer::Tag, aid: count) &priority=5 {
+@if (Version::at_least("4.2.0"))
+event analyzer_confirmation(c: connection, atype: Analyzer::Tag, aid: count) {
+@else
+event protocol_confirmation(c: connection, atype: AllAnalyzers::Tag, aid: count) {
+@endif
 
   if ( atype == Analyzer::ANALYZER_SPICY_LDAP_TCP ) {
     c$ldap_proto = "tcp";
