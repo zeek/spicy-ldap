@@ -2,6 +2,8 @@
 
 module LDAP;
 
+@load base/misc/version
+
 export {
   redef enum Log::ID += { LDAP_LOG,
                           LDAP_SEARCH_LOG };
