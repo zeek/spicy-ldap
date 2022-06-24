@@ -27,6 +27,7 @@ jobs:
         env:
           PATH: /usr/local/bin:/opt/cmake/bin:/opt/spicy/bin:/opt/zeek/bin:/opt/zeek/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         run: |
+          git config --global --add safe.directory $PWD
           git clean -fd
           eval $(zkg env)
           zkg -vvvvv install --force .
