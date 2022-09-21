@@ -132,6 +132,23 @@ public type Messages = unit {
 };
 
 #-----------------------------------------------------------------------------
+type SASLLayer = unit {
+  # For the time being (before we support parsing the SASL layer) this unit
+  # is used by MessageWrapper below to strip it (SASL) so that the parser
+  # can attempt to resume parsing afterward. It also sets the success flag
+  # if '\x30' is found, otherwise backtracks so that we can deal with encrypted
+  # SASL payloads without raising a parse error.
+  var success: bool = False;
+  : bytes &until=b"\x30" {
+    self.success = True;
+  }
+
+  on %error {
+    self.backtrack();
+  }
+};
+
+#-----------------------------------------------------------------------------
 public type MessageWrapper = unit {
   # A wrapper around 'Message'. First, we try to parse a Message unit.
   # There are two possible outcomes:
@@ -159,24 +176,36 @@ public type MessageWrapper = unit {
   # start byte and try to parse a Message starting from that byte. This effectively
   # strips the SASL layer if SASL Signing was enabled. Until now, I haven't found A
   # better way to scan / determine the exact SASL header length yet, so we'll stick with this
-  # for the time being. If the entire LDAP packet was encrypted with SASL, then this will still fail and raise
-  # an error, which is expected (cause we can't decrypt encrypted SASL).
+  # for the time being. If the entire LDAP packet was encrypted with SASL, then we skip parsing for
+  # now (in the long run we need to be parsing SASL/GSSAPI instead, in which case encrypted payloads
+  # are just another message type).
 
-  : bytes &until=b"\x30" if ( self.success == False);
+  # SASLLayer (see unit above) just consumes bytes &until=b"\x30" or backtracks if it isn't found
+  # and sets a success flag we can use later to decide if those bytes contain a parsable message.
+  var sasl_success: bool = False;
+  : SASLLayer &try if ( self.success == False ) {
+    if ( $$.success == True ) {
+      self.sasl_success = True;
+    }
+  }
   var remainder: bytes;
 
-  # The &until consumes the delimiter ('\x30'), and because this is the first byte of a valid LDAP message
-  # we should re-add it to the remainder.
+  # SASLLayer consumes the delimiter ('\x30'), and because this is the first byte of a valid LDAP message
+  # we should re-add it to the remainder if the delimiter was found. If the delimeter was not found, we
+  # leave the remainer empty, but note that the bytes must be consumed either way to avoid stalling the
+  # parser and causing an infinite loop error.
   : bytes &eod if ( self.success == False )  {
-    self.remainder = b"\x30" + $$;
+    if ( self.sasl_success == True ) {
+      self.remainder = b"\x30" + $$;
+    }
   }
 
-  # Again, try to parse a Message unit. Be aware that in theory (and probably in practice) this will
-  # sometimes fail if the '\x30' byte is also present in the SASL header.
+  # Again, try to parse a Message unit. Be aware that in this will sometimes fail if the '\x30' byte is
+  # also present in the SASL header.
 
   # Also, we could try to do this recursively or try a few iterations, but for now I would suggest
   # to try this extra parsing once to get the best cost/benefit tradeoff.
-  : Message &try &parse-from=self.remainder if ( self.success == False ) {
+  : Message &try &parse-from=self.remainder if ( self.success == False && self.sasl_success == True ) {
       if ( $$.success == True ) {
         self.success = True;
         self.message = $$;
