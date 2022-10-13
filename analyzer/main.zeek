@@ -290,9 +290,7 @@ event analyzer_confirmation_info(atype: AllAnalyzers::Tag, info: AnalyzerConfirm
     info$c$ldap_proto = "tcp";
   }
 }
-@else
-
-@if (Version::at_least("4.2.0"))
+@else @if (Version::at_least("4.2.0"))
 event analyzer_confirmation(c: connection, atype: AllAnalyzers::Tag, aid: count) {
 @else
 event protocol_confirmation(c: connection, atype: Analyzer::Tag, aid: count) {
