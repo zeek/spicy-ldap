@@ -289,7 +289,6 @@ event analyzer_confirmation_info(atype: AllAnalyzers::Tag, info: AnalyzerConfirm
   if ( atype == Analyzer::ANALYZER_SPICY_LDAP_TCP ) {
     info$c$ldap_proto = "tcp";
   }
-
 }
 @else
 
