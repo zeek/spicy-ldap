@@ -12,6 +12,10 @@ export {
   ## Whether to log LDAP search attributes or not.
   option default_log_search_attributes = F;
 
+    ## Default logging policy hooks for the streams.
+    global log_policy: Log::PolicyHook;
+    global log_policy_search: Log::PolicyHook;
+
   #############################################################################
   # This is the format of ldap.log (ldap operations minus search-related)
   # Each line represents a unique connection+message_id (requests/responses)
@@ -254,8 +258,8 @@ redef record connection += {
 
 #############################################################################
 event zeek_init() &priority=5 {
-  Log::create_stream(LDAP::LDAP_LOG, [$columns=Message, $ev=log_ldap, $path="ldap"]);
-  Log::create_stream(LDAP::LDAP_SEARCH_LOG, [$columns=Search, $ev=log_ldap_search, $path="ldap_search"]);
+  Log::create_stream(LDAP::LDAP_LOG, [$columns=Message, $ev=log_ldap, $path="ldap", $policy=log_policy]);
+  Log::create_stream(LDAP::LDAP_SEARCH_LOG, [$columns=Search, $ev=log_ldap_search, $path="ldap_search", $policy=log_policy_search]);
 }
 
 #############################################################################
