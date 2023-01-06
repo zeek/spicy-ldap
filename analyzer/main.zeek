@@ -6,11 +6,17 @@ export {
   redef enum Log::ID += { LDAP_LOG,
                           LDAP_SEARCH_LOG };
 
-	## Whether clear text passwords are captured or not.
-	option default_capture_password = F;
+  ## Whether clear text passwords are captured or not.
+  option default_capture_password = F;
 
   ## Whether to log LDAP search attributes or not.
   option default_log_search_attributes = F;
+
+  ## Default logging policy hook for LDAP_LOG.
+  global log_policy: Log::PolicyHook;
+
+  ## Default logging policy hook for LDAP_SEARCH_LOG.
+  global log_policy_search: Log::PolicyHook;
 
   #############################################################################
   # This is the format of ldap.log (ldap operations minus search-related)
@@ -254,8 +260,8 @@ redef record connection += {
 
 #############################################################################
 event zeek_init() &priority=5 {
-  Log::create_stream(LDAP::LDAP_LOG, [$columns=Message, $ev=log_ldap, $path="ldap"]);
-  Log::create_stream(LDAP::LDAP_SEARCH_LOG, [$columns=Search, $ev=log_ldap_search, $path="ldap_search"]);
+  Log::create_stream(LDAP::LDAP_LOG, [$columns=Message, $ev=log_ldap, $path="ldap", $policy=log_policy]);
+  Log::create_stream(LDAP::LDAP_SEARCH_LOG, [$columns=Search, $ev=log_ldap_search, $path="ldap_search", $policy=log_policy_search]);
 }
 
 #############################################################################
