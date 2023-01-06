@@ -63,6 +63,7 @@ Here's what it doesn't have, which could be added by future parties interested i
 - the details of `ExtendedRequest` are not being parsed
 - the details of `ExtendedResponse` are not being parsed
 - the details of `IntermediateResponse` are not being parsed
+- [Logging policy](https://docs.zeek.org/en/master/frameworks/logging.html#filtering-log-records) is available.
 
 Useful Links:
 
