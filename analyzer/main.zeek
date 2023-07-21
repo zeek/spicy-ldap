@@ -405,6 +405,10 @@ event LDAP::searchreq(c: connection,
 
   set_session(c, message_id, LDAP::ProtocolOpcode_SEARCH_REQUEST);
 
+  if ( ! c$ldap_searches[message_id]?$base_object ) {
+    c$ldap_searches[message_id]$base_object = vector();
+  }
+
   if ( scope != LDAP::SearchScope_Undef ) {
     if ( ! c$ldap_searches[message_id]?$scope )
       c$ldap_searches[message_id]$scope = set();
@@ -418,8 +422,6 @@ event LDAP::searchreq(c: connection,
   }
 
   if ( base_object != "" ) {
-    if ( ! c$ldap_searches[message_id]?$base_object )
-      c$ldap_searches[message_id]$base_object = vector();
     c$ldap_searches[message_id]$base_object += base_object;
   }
   c$ldap_searches[message_id]$filter = filter;
