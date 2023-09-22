@@ -509,6 +509,102 @@ public function uint32_to_hex_repr(bts: bytes) : string {
   return ret;
 }
 
+# Helper to compute a string representation of a `SearchFilter`.
+public function string_representation(search_filter: SearchFilter): string {
+    local repr: string;
+
+    switch ( local fType = search_filter.filterType ) {
+      # The NOT, AND and OR filter types are trees and may hold many leaf nodes. So recursively get
+      # the stringPresentations for the leaf nodes and add them all in one final statement.
+
+      case FilterType::FILTER_NOT: {
+        repr = "(!%s)" % search_filter.FILTER_NOT.searchfilter.stringRepresentation;
+      }
+
+      case FilterType::FILTER_AND, FilterType::FILTER_OR: {
+        local nestedObj: ParseNestedAndOr;
+        local printChar = "";
+        local printCount = 0;
+
+        if ( fType == FilterType::FILTER_AND ) {
+          printChar = "&";
+          nestedObj = search_filter.FILTER_AND;
+        } else {
+          printChar = "|";
+          nestedObj = search_filter.FILTER_OR;
+        }
+
+        # Build the nested AND/OR statement in this loop. When we encounter the first element,
+        # we open the statement. At the second element, we close our first complete statement. For every
+        # following statement, we extend the AND/OR statement by wrapping it around the already completed
+        # statement. Although it is also valid to not do this wrapping, which is logically equivalent, e.g:
+        #
+        #           (1)                         (2)
+        #   (?(a=b)(c=d)(e=f))    vs   (?(?(a=b)(c=d))(e=f))
+        #
+        # the latter version is also shown by Wireshark. So although the parsed structure actually represents
+        # version (1) of the query, we now choose to print version (2). If this is not desirable, swap the code
+        # for the following:
+        #
+        # # Construct the nested structure, like (1)
+        # for ( SF in nestedObj.searchfilters ) {
+        #    self.stringRepresentation = self.stringRepresentation + SF.stringRepresentation
+        # }
+        # # Close it with brackets and put the correct printChar for AND/OR in the statement
+        # self.stringRepresentation =  "(%s" % printChar + self.stringRepresentation + ")";
+        #
+
+        for ( searchFilter in nestedObj.searchfilters ) {
+          switch ( printCount ) {
+            case 0: {
+              repr = "(%s%s" % (printChar, searchFilter.stringRepresentation);
+            }
+            case 1: {
+              repr = repr + searchFilter.stringRepresentation + ")";
+            }
+            default: {
+              repr = "(%s" % printChar + repr + searchFilter.stringRepresentation + ")";
+            }
+          }
+          printCount += 1;
+        }
+      }
+
+    # The following FilterTypes are leaf nodes and can thus be represented in a statement
+
+      case FilterType::FILTER_EXT: {
+        repr = "(%s:%s:=%s)" % (search_filter.FILTER_EXT.attributeDesc.decode(),
+                                search_filter.FILTER_EXT.assertionValueDecoded,
+                                search_filter.FILTER_EXT.matchValue.decode());
+      }
+      case FilterType::FILTER_APPROX: {
+        repr = "(%s~=%s)" % (search_filter.FILTER_APPROX.attributeDesc.decode(),
+                             search_filter.FILTER_APPROX.assertionValueDecoded);
+      }
+      case FilterType::FILTER_EQ: {
+        repr = "(%s=%s)" % (search_filter.FILTER_EQ.attributeDesc.decode(),
+                            search_filter.FILTER_EQ.assertionValueDecoded);
+      }
+      case FilterType::FILTER_GE: {
+        repr = "(%s>=%s)" % (search_filter.FILTER_GE.attributeDesc.decode(),
+                             search_filter.FILTER_GE.assertionValueDecoded);
+      }
+      case FilterType::FILTER_LE: {
+        repr = "(%s<=%s)" % (search_filter.FILTER_LE.attributeDesc.decode(),
+                             search_filter.FILTER_LE.assertionValueDecoded);
+      }
+      case FilterType::FILTER_SUBSTR: {
+        repr  = "(%s=*%s*)" % (search_filter.FILTER_SUBSTR.attributeDesc.decode(),
+                               search_filter.FILTER_SUBSTR.assertionValueDecoded);
+      }
+      case FilterType::FILTER_PRESENT: {
+        repr = "(%s=*)" % search_filter.FILTER_PRESENT;
+      }
+    }
+
+    return repr;
+}
+
 # Represents an (extended) key-value pair present in SearchFilters
 type DecodedAttributeValue = unit(fType: FilterType) {
   var assertionValueDecoded: string = "";
@@ -609,94 +705,7 @@ type SearchFilter = unit {
   # recursively get the stringRepresentations for those leafs, which are SearchFilters
 
   on %done {
-    switch ( local fType = self.filterType ) {
-      # The NOT, AND and OR filter types are trees and may hold many leaf nodes. So recursively get
-      # the stringPresentations for the leaf nodes and add them all in one final statement.
-
-      case FilterType::FILTER_NOT: {
-        self.stringRepresentation = "(!%s)" % self.FILTER_NOT.searchfilter.stringRepresentation;
-      }
-
-      case FilterType::FILTER_AND, FilterType::FILTER_OR: {
-        local nestedObj: ParseNestedAndOr;
-        local printChar = "";
-        local printCount = 0;
-
-        if ( fType == FilterType::FILTER_AND ) {
-          printChar = "&";
-          nestedObj = self.FILTER_AND;
-        } else {
-          printChar = "|";
-          nestedObj = self.FILTER_OR;
-        }
-
-        # Build the nested AND/OR statement in this loop. When we encounter the first element,
-        # we open the statement. At the second element, we close our first complete statement. For every
-        # following statement, we extend the AND/OR statement by wrapping it around the already completed
-        # statement. Although it is also valid to not do this wrapping, which is logically equivalent, e.g:
-        #
-        #           (1)                         (2)
-        #   (?(a=b)(c=d)(e=f))    vs   (?(?(a=b)(c=d))(e=f))
-        #
-        # the latter version is also shown by Wireshark. So although the parsed structure actually represents
-        # version (1) of the query, we now choose to print version (2). If this is not desirable, swap the code
-        # for the following:
-        #
-        # # Construct the nested structure, like (1)
-        # for ( SF in nestedObj.searchfilters ) {
-        #    self.stringRepresentation = self.stringRepresentation + SF.stringRepresentation
-        # }
-        # # Close it with brackets and put the correct printChar for AND/OR in the statement
-        # self.stringRepresentation =  "(%s" % printChar + self.stringRepresentation + ")";
-        #
-
-        for ( searchFilter in nestedObj.searchfilters ) {
-          switch ( printCount ) {
-            case 0: {
-              self.stringRepresentation = "(%s%s" % (printChar, searchFilter.stringRepresentation);
-            }
-            case 1: {
-              self.stringRepresentation = self.stringRepresentation + searchFilter.stringRepresentation + ")";
-            }
-            default: {
-              self.stringRepresentation = "(%s" % printChar + self.stringRepresentation + searchFilter.stringRepresentation + ")";
-            }
-          }
-          printCount += 1;
-        }
-      }
-
-    # The following FilterTypes are leaf nodes and can thus be represented in a statement
-
-      case FilterType::FILTER_EXT: {
-        self.stringRepresentation = "(%s:%s:=%s)" % (self.FILTER_EXT.attributeDesc.decode(),
-                                                     self.FILTER_EXT.assertionValueDecoded,
-                                                     self.FILTER_EXT.matchValue.decode());
-      }
-      case FilterType::FILTER_APPROX: {
-        self.stringRepresentation = "(%s~=%s)" % (self.FILTER_APPROX.attributeDesc.decode(),
-                                                  self.FILTER_APPROX.assertionValueDecoded);
-      }
-      case FilterType::FILTER_EQ: {
-        self.stringRepresentation = "(%s=%s)" % (self.FILTER_EQ.attributeDesc.decode(),
-                                                self.FILTER_EQ.assertionValueDecoded);
-      }
-      case FilterType::FILTER_GE: {
-        self.stringRepresentation = "(%s>=%s)" % (self.FILTER_GE.attributeDesc.decode(),
-                                                  self.FILTER_GE.assertionValueDecoded);
-      }
-      case FilterType::FILTER_LE: {
-        self.stringRepresentation = "(%s<=%s)" % (self.FILTER_LE.attributeDesc.decode(),
-                                                  self.FILTER_LE.assertionValueDecoded);
-      }
-      case FilterType::FILTER_SUBSTR: {
-        self.stringRepresentation = "(%s=*%s*)" % (self.FILTER_SUBSTR.attributeDesc.decode(),
-                                                  self.FILTER_SUBSTR.assertionValueDecoded);
-      }
-      case FilterType::FILTER_PRESENT: {
-        self.stringRepresentation = "(%s=*)" % self.FILTER_PRESENT;
-      }
-    }
+    self.stringRepresentation = string_representation(self);
   }
 
   on %error {
