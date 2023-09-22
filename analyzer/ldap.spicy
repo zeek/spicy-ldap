@@ -524,7 +524,6 @@ public function string_representation(search_filter: SearchFilter): string {
       case FilterType::FILTER_AND, FilterType::FILTER_OR: {
         local nestedObj: ParseNestedAndOr;
         local printChar = "";
-        local printCount = 0;
 
         if ( fType == FilterType::FILTER_AND ) {
           printChar = "&";
@@ -554,10 +553,16 @@ public function string_representation(search_filter: SearchFilter): string {
         # self.stringRepresentation =  "(%s" % printChar + self.stringRepresentation + ")";
         #
 
+        local i = 0;
         for ( searchFilter in nestedObj.searchfilters ) {
-          switch ( printCount ) {
+          switch ( i ) {
             case 0: {
-              repr = "(%s%s" % (printChar, searchFilter.stringRepresentation);
+              repr = "(%s%s%s" % (
+                  printChar,
+                  searchFilter.stringRepresentation,
+                  # If we have exactly one element immediately close the statement since we are done.
+                  |nestedObj.searchfilters| == 1 ? ")" : ""
+              );
             }
             case 1: {
               repr = repr + searchFilter.stringRepresentation + ")";
@@ -566,7 +571,7 @@ public function string_representation(search_filter: SearchFilter): string {
               repr = "(%s" % printChar + repr + searchFilter.stringRepresentation + ")";
             }
           }
-          printCount += 1;
+          i += 1;
         }
       }
 
