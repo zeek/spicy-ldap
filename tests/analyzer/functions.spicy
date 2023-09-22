@@ -91,3 +91,24 @@ assert LDAP::uint32_to_hex_repr(b"\x00\x00\x00\x00") == "0x00000000";
 
 # 4 times \xff
 assert LDAP::uint32_to_hex_repr(b"\xff\xff\xff\xff") == "0xffffffff";
+
+# ----------------------------------------------------------------------------------
+# function string_representation()
+function test_string_representation() {
+    local or_: LDAP::SearchFilter;
+    or_.filterType = LDAP::FilterType::FILTER_PRESENT;
+    or_.FILTER_PRESENT = "foo";
+    or_.stringRepresentation = LDAP::string_representation(or_);
+
+    local nestedOr: LDAP::ParseNestedAndOr;
+    nestedOr.searchfilters = vector<LDAP::SearchFilter>();
+    nestedOr.searchfilters.push_back(or_);
+
+    local searchFilter: LDAP::SearchFilter;
+    searchFilter.filterType = LDAP::FilterType::FILTER_OR;
+    searchFilter.FILTER_OR = nestedOr;
+
+    local repr = LDAP::string_representation(searchFilter);
+    assert repr == "(|(foo=*))": repr;
+}
+test_string_representation();
