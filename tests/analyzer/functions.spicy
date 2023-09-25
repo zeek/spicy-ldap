@@ -91,3 +91,41 @@ assert LDAP::uint32_to_hex_repr(b"\x00\x00\x00\x00") == "0x00000000";
 
 # 4 times \xff
 assert LDAP::uint32_to_hex_repr(b"\xff\xff\xff\xff") == "0xffffffff";
+
+# ----------------------------------------------------------------------------------
+# function string_representation()
+function make_nested_repr(filters: vector<string>): string {
+    local nestedOr: LDAP::ParseNestedAndOr;
+    nestedOr.searchfilters = vector<LDAP::SearchFilter>();
+
+    for (f in filters) {
+        local or_: LDAP::SearchFilter;
+        or_.filterType = LDAP::FilterType::FILTER_PRESENT;
+        or_.FILTER_PRESENT = f;
+        or_.stringRepresentation = LDAP::string_representation(or_);
+
+        nestedOr.searchfilters.push_back(or_);
+    }
+
+    local searchFilter: LDAP::SearchFilter;
+    searchFilter.filterType = LDAP::FilterType::FILTER_OR;
+    searchFilter.FILTER_OR = nestedOr;
+
+    return LDAP::string_representation(searchFilter);
+}
+
+function test_string_representation() {
+    local repr0 = make_nested_repr(vector());
+    assert repr0 == "": repr0;
+
+    local repr1 = make_nested_repr(vector("foo"));
+    assert repr1 == "(|(foo=*))": repr1;
+
+    local repr2 = make_nested_repr(vector("foo", "bar"));
+    assert repr2 == "(|(foo=*)(bar=*))": repr2;
+
+    local repr3 = make_nested_repr(vector("foo", "bar", "baz"));
+    assert repr3 == "(|(|(foo=*)(bar=*))(baz=*))": repr3;
+#                   "(|(|(foo=*)(bar=*))(baz=*))"
+}
+test_string_representation();
