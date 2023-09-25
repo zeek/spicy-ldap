@@ -88,12 +88,21 @@ type LengthType = unit {
 };
 
 type ASN1Tag = unit {
+@if SPICY_VERSION >= 10900
+ : bitfield(8) {
+    type_: 0..4 &convert=ASN1Type($$);
+    constructed: 5 &convert=cast<bool>($$);
+    class: 6..7 &convert=ASN1Class($$);
+  };
+
+@else
+  # Version before spicy-1.9 do not support lifting
+  # anonymous bitfields into parent unit.
   var type_: ASN1Type;
   var class: ASN1Class;
   var constructed: bool;
 
-  # TODO(bbannier): Use an anonymous bitfield here once zeek/spicy#1533 is fixed.
-  bits: bitfield(8) {
+  : bitfield(8) {
     num: 0..4;
     constructed: 5;
     class: 6..7;
@@ -102,6 +111,7 @@ type ASN1Tag = unit {
     self.class = ASN1Class($$.class);
     self.constructed = cast<bool>($$.constructed);
   }
+@endif
 };
 
 #- ASN.1 bit string -----------------------------------------------------------
