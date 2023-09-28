@@ -126,6 +126,6 @@ function test_string_representation() {
 
     local repr3 = make_nested_repr(vector("foo", "bar", "baz"));
     assert repr3 == "(|(|(foo=*)(bar=*))(baz=*))": repr3;
-#                   "(|(|(foo=*)(bar=*))(baz=*))"
 }
+
 test_string_representation();
