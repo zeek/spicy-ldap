@@ -578,9 +578,11 @@ public function string_representation(search_filter: SearchFilter): string {
     # The following FilterTypes are leaf nodes and can thus be represented in a statement
 
       case FilterType::FILTER_EXT: {
-        repr = "(%s:%s:=%s)" % (search_filter.FILTER_EXT.attributeDesc.decode(),
-                                search_filter.FILTER_EXT.assertionValueDecoded,
-                                search_filter.FILTER_EXT.matchValue.decode());
+        # For extended search filters the meaning of the individual fields in
+        # `DecodedAttributeValue` is slightly different.
+        repr = "(%s:%s:=%s)" % (search_filter.FILTER_EXT.assertionValueDecoded,
+                                search_filter.FILTER_EXT.attributeDesc.decode(),
+                                search_filter.FILTER_EXT.matchValue);
       }
       case FilterType::FILTER_APPROX: {
         repr = "(%s~=%s)" % (search_filter.FILTER_APPROX.attributeDesc.decode(),
