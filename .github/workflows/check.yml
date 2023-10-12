@@ -9,7 +9,6 @@ jobs:
       matrix:
         version:
           - zeek:6.0
-          - zeek-dev:latest
 
       fail-fast: false
 

@@ -1,6 +1,11 @@
 LDAP Analyzer
 =============
 
+> **Note**
+>
+> Zeek 6.1 and later versions include the LDAP analyzer.
+> You no longer need this package when using those Zeek versions.
+
 Here's what it has:
 
 - ASN.1 structure decoding: this is probably generally useful for more than just the LDAP parser, so it may be of interest for this to be included somehow as part of spicy's standard modules or whatever
